@@ -5,6 +5,8 @@
 #include <cmath>
 //#include <cstdio>
 #include <cstring>
+#include<limits>
+
 #include "DecisionTreeNode.h"
 
 namespace pico_dt {
@@ -23,6 +25,22 @@ namespace pico_dt {
 #pragma ide diagnostic ignored "misc-no-recursion"
 
     void DecisionTreeNode::fit(double **parameters, int *labels, size_t count) {
+        // TODO: make this non-recursive, probably using parent_branch like in serialize
+        // because apparently doing this recursively is bad
+        // (technically it can cause a stack overflow)
+        // storing a full parameter stack should be avoided
+        // the parameter stack for a node can be recalculated quickly by the following
+        // 1. parameter list starts as full parameter list
+        // 2. current node starts as this node
+        // 3. if current node is lesser branch of parent branch
+        //    3.a. remove all samples greater than parent branch threshold from parameter list
+        // 4. if current node is lesser branch of parent branch
+        //    4.a. remove all samples less than parent branch threshold from parameter list
+        // 5. if parent branch is null, stopp
+        // 6. goto 3
+        // This is basically the reverse of what happens in this method when going down the tree.
+        // proof: A & B & C == C & B & A
+
         //printf("Starting fit of tree, %zu parameters sent.\n", count);
         if (calculate_entropy(labels, count) <= 0) {
             //printf("Node is a leaf!\n");
@@ -36,7 +54,10 @@ namespace pico_dt {
         auto **test_splits = new double *[parameter_count];
         for (size_t i = 0; i < parameter_count; ++i) {
             // create a list for the test splits of this parameter
-            test_splits[i] = new double[count]{0};  // TODO: default everything to -inf
+            test_splits[i] = new double[count];
+            for (size_t j = 0; j < count; ++j){
+                test_splits[i][j] = -std::numeric_limits<double>::infinity();
+            }
 
             // add all of the copies of this parameter to the array
             for (size_t j = 0; j < count; j++) {
@@ -70,9 +91,9 @@ namespace pico_dt {
                                                                test_splits[i][j]);
                 //printf("%zu, %zu, %lf, %lf\n", i, j, test_splits[i][j], this_information_gain_ratio);
                 // use >=, not > as lower values are sorted later
-                // in the case of parameters like 2.0, 2.0, 0.0, 0.0, the splits will be 2.0, 1.0, 0.0, 0.0
-                // both 2.0 and 1.0 will have the same ratios, but 1.0 will split down the middle of the parameters,
-                // not at one on the parameters
+                // in the case of parameters like 2.0, 2.0, 0.0, 0.0, the splits will be 2.0, 1.0, 0.0
+                // both 2.0 and 1.0 will split the samples in half, but 1.0 will split down the middle of the
+                // gap between parameters, not right at one on the parameters
                 if (this_score >= best_score) {
                     best_score = this_score;
                     best_parameter = i;
@@ -143,7 +164,10 @@ namespace pico_dt {
     [[maybe_unused]] double DecisionTreeNode::calculate_entropy(const int *labels, size_t total_count) const {
 
         // count how many of each label there are.
-        auto *label_counts = new size_t[label_count]{0};
+        auto *label_counts = new size_t[label_count];
+        for (size_t i = 0; i < label_count; ++i){
+            label_counts[i] = 0;
+        }
         for (size_t i = 0; i < total_count; i++) {
             int label = labels[i];
             ++label_counts[label];
@@ -166,9 +190,14 @@ namespace pico_dt {
     DecisionTreeNode::calculate_information_gain(double **parameters, const int *labels, size_t total_count,
                                                  size_t split_parameter, double split_threshold) const {
         // count how many of each label there are.
-        auto *parent_label_counts = new size_t[label_count]{0};
-        auto *lesser_child_label_counts = new size_t[label_count]{0};
-        auto *greater_child_label_counts = new size_t[label_count]{0};
+        auto *parent_label_counts = new size_t[label_count];
+        auto *lesser_child_label_counts = new size_t[label_count];
+        auto *greater_child_label_counts = new size_t[label_count];
+        for (size_t i = 0; i < label_count; ++i){
+            parent_label_counts[i] = 0;
+            lesser_child_label_counts[i] = 0;
+            greater_child_label_counts[i] = 0;
+        }
         double lesser_child_split_count = 0;
         double greater_child_split_count = 0;
         for (size_t i = 0; i < total_count; i++) {
@@ -246,9 +275,14 @@ namespace pico_dt {
     DecisionTreeNode::calculate_information_gain_ratio(double **parameters, const int *labels, size_t total_count,
                                                        size_t split_parameter, double split_threshold) const {
         // count how many of each label there are.
-        auto *parent_label_counts = new size_t[label_count]{0};
-        auto *lesser_child_label_counts = new size_t[label_count]{0};
-        auto *greater_child_label_counts = new size_t[label_count]{0};
+        auto *parent_label_counts = new size_t[label_count];
+        auto *lesser_child_label_counts = new size_t[label_count];
+        auto *greater_child_label_counts = new size_t[label_count];
+        for (size_t i = 0; i < label_count; ++i){
+            parent_label_counts[i] = 0;
+            lesser_child_label_counts[i] = 0;
+            greater_child_label_counts[i] = 0;
+        }
         double lesser_child_split_count = 0;
         double greater_child_split_count = 0;
         for (size_t i = 0; i < total_count; i++) {
@@ -400,14 +434,6 @@ namespace pico_dt {
             }
             if (next_node->parent_branch == nullptr) break;
         }
-
-        //int i;
-        //for (i = 0; i < calculate_serialized_size(); i++)
-        //{
-        //    if (i > 0) printf(" ");
-        //    printf("%02X", buffer[i]);
-        //}
-        //printf("\n");
 
         return buffer;
     }
