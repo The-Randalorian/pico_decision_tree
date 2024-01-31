@@ -10,6 +10,7 @@
 
 #define PICO_DT_LEAF_FLAG 0xAA
 #define PICO_DT_BRANCH_FLAG 0xBB
+#define TREE_REBUILD_STACK_SIZE 256
 
 namespace pico_dt {
 

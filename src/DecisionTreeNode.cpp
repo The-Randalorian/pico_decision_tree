@@ -26,20 +26,20 @@ namespace pico_dt {
 
     void DecisionTreeNode::fit(double **parameters, int *labels, size_t count) {
         // TODO: make this non-recursive, probably using parent_branch like in serialize
-        // because apparently doing this recursively is bad
-        // (technically it can cause a stack overflow)
-        // storing a full parameter stack should be avoided
-        // the parameter stack for a node can be recalculated quickly by the following
-        // 1. parameter list starts as full parameter list
-        // 2. current node starts as this node
-        // 3. if current node is lesser branch of parent branch
-        //    3.a. remove all samples greater than parent branch threshold from parameter list
-        // 4. if current node is lesser branch of parent branch
-        //    4.a. remove all samples less than parent branch threshold from parameter list
-        // 5. if parent branch is null, stopp
-        // 6. goto 3
-        // This is basically the reverse of what happens in this method when going down the tree.
-        // proof: A & B & C == C & B & A
+        //  because apparently doing this recursively is bad
+        //  (technically it can cause a stack overflow)
+        //  storing a full parameter stack should be avoided
+        //  the parameter stack for a node can be recalculated quickly by the following
+        //  1. parameter list starts as full parameter list
+        //  2. current node starts as this node
+        //  3. if current node is lesser branch of parent branch
+        //     3.a. remove all samples greater than parent branch threshold from parameter list
+        //  4. if current node is lesser branch of parent branch
+        //     4.a. remove all samples less than parent branch threshold from parameter list
+        //  5. if parent branch is null, stopp
+        //  6. goto 3
+        //  This is basically the reverse of what happens in this method when going down the tree.
+        //  proof: A & B & C == C & B & A
 
         //printf("Starting fit of tree, %zu parameters sent.\n", count);
         if (calculate_entropy(labels, count) <= 0) {
@@ -440,7 +440,9 @@ namespace pico_dt {
 
     DecisionTreeNode *
     deserialize_decision_tree(size_t parameter_count, int label_count, uint8_t *buffer, size_t buffer_length) {
-        DecisionTreeNode *dt_stack[100];
+        DecisionTreeNode *dt_stack[TREE_REBUILD_STACK_SIZE];
+        // TODO: Find a way to not need a fixed size stack here. Maybe use the parent_branch parameter to point to the
+        //  next item in the stack, then just save and update the top of the stack?
         size_t stack_pointer = 0;
         for (size_t buffer_pointer = 0; buffer_pointer < buffer_length; ++buffer_pointer) {
             switch (buffer[buffer_pointer]) {
