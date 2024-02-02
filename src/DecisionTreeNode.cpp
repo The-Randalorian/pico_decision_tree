@@ -357,6 +357,11 @@ namespace pico_dt {
         return buffer;
     }
 
+    DecisionTreeNode::~DecisionTreeNode() {
+        delete lesser_branch;
+        delete greater_branch;
+    }
+
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "NullDereference"  // null dereferences are a know, and desired, effect.
 

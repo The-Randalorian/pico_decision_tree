@@ -76,6 +76,8 @@ namespace pico_dt {
         /// \return A pointer to a buffer containing the serialized decision tree.
         uint8_t *serialize();
 
+        ~ DecisionTreeNode();
+
 #ifdef PICO_DT_ENABLE_LOW_USE_FEATURES
 
         /// Simplest prediction method, based on recursion. Recommended not to use.

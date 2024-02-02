@@ -9,3 +9,4 @@ add_executable(pico_dt_test src/main.cpp
 
 add_library(pico_dt INTERFACE
         src/DecisionTreeNode.cpp)
+target_include_directories(pico_dt INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/src)
