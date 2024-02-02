@@ -10,7 +10,8 @@
 
 #define PICO_DT_LEAF_FLAG 0xAA
 #define PICO_DT_BRANCH_FLAG 0xBB
-#define TREE_REBUILD_STACK_SIZE 256
+
+//#define PICO_DT_LOW_USE_FEATURES
 
 namespace pico_dt {
 
@@ -72,6 +73,16 @@ namespace pico_dt {
                                    size_t split_parameter,
                                    double split_threshold) const;
 
+        /// Calculate how large this decision tree will be once serialized.
+        /// \return The final size of the serialized decision tree.
+        size_t calculate_serialized_size();
+
+        /// Serialize the decision tree into raw bytes.
+        /// \return A pointer to a buffer containing the serialized decision tree.
+        uint8_t *serialize();
+
+        #ifdef PICO_DT_ENABLE_LOW_USE_FEATURES
+
         /// Calculate the information gain at this node. Mainly used internally. See https://en.wikipedia.org/wiki/Information_gain_ratio#Split_Information_calculation
         /// \param parameters An array of pointers to arrays of doubles giving sets of input parameters.
         /// \param count The number of parameters given.
@@ -91,14 +102,10 @@ namespace pico_dt {
         /// \return The information gain of this node when split by the threshold.
         [[maybe_unused]] double calculate_information_gain_ratio(double **parameters, const int *labels, size_t count,
                                                                  size_t split_parameter, double split_threshold) const;
-        /// Calculate how large this decision tree will be once serialized.
-        /// \return The final size of the serialized decision tree.
-        size_t calculate_serialized_size();
 
-        /// Serialize the decision tree into raw bytes.
-        /// \return A pointer to a buffer containing the serialized decision tree.
-        uint8_t *serialize();
+        #endif
 
+        DecisionTreeNode *parent_branch;
     private:
         size_t parameter_count;
 
@@ -114,8 +121,6 @@ namespace pico_dt {
 
         DecisionTreeNode *greater_branch;
 
-        DecisionTreeNode *parent_branch;
-
         void serialize_leaf(uint8_t *location);
 
         void serialize_branch(uint8_t *location);
@@ -128,7 +133,7 @@ namespace pico_dt {
     /// \param buffer_length length of the serialized data buffer.
     /// \return A pointer to a new decision tree, made from the serialized data.
     DecisionTreeNode *
-    deserialize_decision_tree(size_t parameter_count, int label_count, uint8_t *buffer, size_t buffer_length);
+    deserialize_decision_tree(size_t parameter_count, int label_count, const uint8_t *buffer, size_t buffer_length);
 
 } // pico_dt
 
