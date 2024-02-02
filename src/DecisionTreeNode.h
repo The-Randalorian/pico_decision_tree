@@ -43,7 +43,7 @@ namespace pico_dt {
         /// \param parameters An array of pointers pointing to arrays of parameters. Arrays of parameters must be parameter_count long.
         /// \param labels An array of labels, with one label for each parameter array given.
         /// \param count The length of both the parameter pointer array (parameters) and label array (labels).
-        void fit(double **parameters, int *labels, size_t count);
+        void fit(double **parameters, int *labels, size_t count, int limit = -1);
 
         /// Predict a value given some parameters.
         /// \param parameters An array of parameters to use.

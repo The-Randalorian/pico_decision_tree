@@ -24,7 +24,7 @@ namespace pico_dt {
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "misc-no-recursion"
 
-    void DecisionTreeNode::fit(double **parameters, int *labels, size_t count) {
+    void DecisionTreeNode::fit(double **parameters, int *labels, size_t count, int limit) {
         // TODO: make this non-recursive, probably using parent_branch like in serialize
         //  because apparently doing this recursively is bad
         //  (technically it can cause a stack overflow)
@@ -45,6 +45,26 @@ namespace pico_dt {
         if (calculate_entropy(labels, count) <= 0) {
             //printf("Node is a leaf!\n");
             // the entropy is 0! This node is pure! Find the first label and set it as the default value.
+            default_value = labels[0];
+            return;
+        }
+        if (limit == 0) {
+            //printf("Node shouldn't be a leaf, but was forced to be!\n");
+            // the entropy is 0! This node is pure! Find the first label and set it as the default value.
+            auto *label_counts = new size_t[label_count];
+            for (int i = 0; i < label_count; ++i) {
+                label_counts[i] = 0;
+            }
+            for (size_t i = 0; i < count; i++) {
+                ++label_counts[labels[i]];
+            }
+            size_t best_count = 0;
+            for (int i = 0; i < label_count; ++i) {
+                if(label_counts[i] > best_count){
+                    best_count = label_counts[i];
+                    default_value = i;
+                }
+            }
             default_value = labels[0];
             return;
         }
@@ -129,7 +149,7 @@ namespace pico_dt {
         }
         lesser_branch = new DecisionTreeNode(parameter_count, label_count);
         lesser_branch->parent_branch = this;
-        lesser_branch->fit(lesser_parameters, lesser_labels, lesser_count);
+        lesser_branch->fit(lesser_parameters, lesser_labels, lesser_count, limit >= 0 ? limit - 1 : -1);
         //printf("Done fitting lesser child.\n");
         delete[] lesser_parameters;
         delete[] lesser_labels;
@@ -146,7 +166,7 @@ namespace pico_dt {
         }
         greater_branch = new DecisionTreeNode(parameter_count, label_count);
         greater_branch->parent_branch = this;
-        greater_branch->fit(greater_parameters, greater_labels, greater_count);
+        greater_branch->fit(greater_parameters, greater_labels, greater_count, limit >= 0 ? limit - 1 : -1);
         //printf("Done fitting greater child.\n");
         delete[] greater_parameters;
         delete[] greater_labels;
