@@ -55,7 +55,7 @@ namespace pico_dt {
         for (size_t i = 0; i < parameter_count; ++i) {
             // create a list for the test splits of this parameter
             test_splits[i] = new double[count];
-            for (size_t j = 0; j < count; ++j){
+            for (size_t j = 0; j < count; ++j) {
                 test_splits[i][j] = -std::numeric_limits<double>::infinity();
             }
 
@@ -155,17 +155,11 @@ namespace pico_dt {
 
 #pragma clang diagnostic pop
 
-    [[maybe_unused]] int DecisionTreeNode::predict_simple(double *parameters) {
-        if (lesser_branch == nullptr || greater_branch == nullptr) return default_value;
-        if (parameters[comparison_parameter] < comparison_threshold) return lesser_branch->predict(parameters);
-        else return greater_branch->predict(parameters);
-    }
-
-    [[maybe_unused]] double DecisionTreeNode::calculate_entropy(const int *labels, size_t total_count) const {
+    double DecisionTreeNode::calculate_entropy(const int *labels, size_t total_count) const {
 
         // count how many of each label there are.
         auto *label_counts = new size_t[label_count];
-        for (size_t i = 0; i < label_count; ++i){
+        for (size_t i = 0; i < label_count; ++i) {
             label_counts[i] = 0;
         }
         for (size_t i = 0; i < total_count; i++) {
@@ -186,14 +180,14 @@ namespace pico_dt {
         return entropy;
     }
 
-    [[maybe_unused]] double
+    double
     DecisionTreeNode::calculate_information_gain(double **parameters, const int *labels, size_t total_count,
                                                  size_t split_parameter, double split_threshold) const {
         // count how many of each label there are.
         auto *parent_label_counts = new size_t[label_count];
         auto *lesser_child_label_counts = new size_t[label_count];
         auto *greater_child_label_counts = new size_t[label_count];
-        for (size_t i = 0; i < label_count; ++i){
+        for (size_t i = 0; i < label_count; ++i) {
             parent_label_counts[i] = 0;
             lesser_child_label_counts[i] = 0;
             greater_child_label_counts[i] = 0;
@@ -345,6 +339,7 @@ namespace pico_dt {
 
 #pragma clang diagnostic push
 #pragma ide diagnostic ignored "NullDereference"  // null dereferences are a know, and desired, effect.
+
     DecisionTreeNode *
     deserialize_decision_tree(size_t parameter_count, int label_count, const uint8_t *buffer, size_t buffer_length) {
         DecisionTreeNode *dt_stack = nullptr;
@@ -371,8 +366,8 @@ namespace pico_dt {
                     DecisionTreeNode *lesser_branch = dt_stack;
                     dt_stack = lesser_branch->parent_branch;
                     new_node = new DecisionTreeNode(parameter_count, label_count, comparison_parameter,
-                                                                     comparison_threshold, lesser_branch,
-                                                                     greater_branch);
+                                                    comparison_threshold, lesser_branch,
+                                                    greater_branch);
                     new_node->parent_branch = dt_stack;
                     dt_stack = new_node;
                     break;
@@ -381,103 +376,110 @@ namespace pico_dt {
         DecisionTreeNode *final = dt_stack;
         return final;
     }
+
 #pragma clang diagnostic pop
 
 #ifdef PICO_DT_ENABLE_LOW_USE_FEATURES
-[[maybe_unused]] double
-    DecisionTreeNode::calculate_split_information(double **parameters, size_t total_count, size_t split_parameter,
-                                                  double split_threshold) {
-        // count how many of each label there are.
-        double lesser_child_split_count = 0;
-        double greater_child_split_count = 0;
-        for (size_t i = 0; i < total_count; i++) {
-
-            // add to the child label counts
-            if (parameters[i][split_parameter] < split_threshold) ++lesser_child_split_count;
-            else ++greater_child_split_count;
+    [[maybe_unused]] int DecisionTreeNode::predict_simple(double *parameters) {
+            if (lesser_branch == nullptr || greater_branch == nullptr) return default_value;
+            if (parameters[comparison_parameter] < comparison_threshold) return lesser_branch->predict_simple(parameters);
+            else return greater_branch->predict_simple(parameters);
         }
-
-        // calculate the split information
-        double split_information = -((((double) lesser_child_split_count / (double) total_count) *
-                                      log2((double) lesser_child_split_count / (double) total_count)) +
-                                     (((double) greater_child_split_count / (double) total_count) *
-                                      log2((double) greater_child_split_count / (double) total_count)));
-
-        return split_information;
-    }
 
     [[maybe_unused]] double
-    DecisionTreeNode::calculate_information_gain_ratio(double **parameters, const int *labels, size_t total_count,
-                                                       size_t split_parameter, double split_threshold) const {
-        // count how many of each label there are.
-        auto *parent_label_counts = new size_t[label_count];
-        auto *lesser_child_label_counts = new size_t[label_count];
-        auto *greater_child_label_counts = new size_t[label_count];
-        for (size_t i = 0; i < label_count; ++i){
-            parent_label_counts[i] = 0;
-            lesser_child_label_counts[i] = 0;
-            greater_child_label_counts[i] = 0;
-        }
-        double lesser_child_split_count = 0;
-        double greater_child_split_count = 0;
-        for (size_t i = 0; i < total_count; i++) {
+        DecisionTreeNode::calculate_split_information(double **parameters, size_t total_count, size_t split_parameter,
+                                                      double split_threshold) {
+            // count how many of each label there are.
+            double lesser_child_split_count = 0;
+            double greater_child_split_count = 0;
+            for (size_t i = 0; i < total_count; i++) {
 
-            //add to the total label count (parent entropy)
-            int label = labels[i];
-            ++parent_label_counts[label];
-
-            // add to the child label counts
-            if (parameters[i][split_parameter] < split_threshold) {
-                ++lesser_child_label_counts[label];
-                ++lesser_child_split_count;
-            } else {
-                ++greater_child_label_counts[label];
-                ++greater_child_split_count;
+                // add to the child label counts
+                if (parameters[i][split_parameter] < split_threshold) ++lesser_child_split_count;
+                else ++greater_child_split_count;
             }
+
+            // calculate the split information
+            double split_information = -((((double) lesser_child_split_count / (double) total_count) *
+                                          log2((double) lesser_child_split_count / (double) total_count)) +
+                                         (((double) greater_child_split_count / (double) total_count) *
+                                          log2((double) greater_child_split_count / (double) total_count)));
+
+            return split_information;
         }
 
-        // calculate the parent entropy
-        double parent_entropy = 0.0;
-        for (int i = 0; i < label_count; ++i) {  // run the summation
-            double p_i = (double) parent_label_counts[i] / (double) total_count;
-            if (p_i == 0) continue;
-            parent_entropy += p_i * log2(p_i);
+        [[maybe_unused]] double
+        DecisionTreeNode::calculate_information_gain_ratio(double **parameters, const int *labels, size_t total_count,
+                                                           size_t split_parameter, double split_threshold) const {
+            // count how many of each label there are.
+            auto *parent_label_counts = new size_t[label_count];
+            auto *lesser_child_label_counts = new size_t[label_count];
+            auto *greater_child_label_counts = new size_t[label_count];
+            for (size_t i = 0; i < label_count; ++i){
+                parent_label_counts[i] = 0;
+                lesser_child_label_counts[i] = 0;
+                greater_child_label_counts[i] = 0;
+            }
+            double lesser_child_split_count = 0;
+            double greater_child_split_count = 0;
+            for (size_t i = 0; i < total_count; i++) {
+
+                //add to the total label count (parent entropy)
+                int label = labels[i];
+                ++parent_label_counts[label];
+
+                // add to the child label counts
+                if (parameters[i][split_parameter] < split_threshold) {
+                    ++lesser_child_label_counts[label];
+                    ++lesser_child_split_count;
+                } else {
+                    ++greater_child_label_counts[label];
+                    ++greater_child_split_count;
+                }
+            }
+
+            // calculate the parent entropy
+            double parent_entropy = 0.0;
+            for (int i = 0; i < label_count; ++i) {  // run the summation
+                double p_i = (double) parent_label_counts[i] / (double) total_count;
+                if (p_i == 0) continue;
+                parent_entropy += p_i * log2(p_i);
+            }
+            parent_entropy = -parent_entropy;
+
+            //calculate the child entropies
+            double lesser_child_entropy = 0.0;
+            for (int i = 0; i < label_count; ++i) {  // run the summation
+                double p_i = (double) lesser_child_label_counts[i] / (double) lesser_child_split_count;
+                if (p_i == 0) continue;
+                lesser_child_entropy += p_i * log2(p_i);
+            }
+            lesser_child_entropy = -lesser_child_entropy;
+            double greater_child_entropy = 0.0;
+            for (int i = 0; i < label_count; ++i) {  // run the summation
+                double p_i = (double) greater_child_label_counts[i] / (double) greater_child_split_count;
+                if (p_i == 0) continue;
+                greater_child_entropy += p_i * log2(p_i);
+            }
+            greater_child_entropy = -greater_child_entropy;
+
+            // calculate information gain
+            double information_gain = parent_entropy - ((lesser_child_entropy + greater_child_entropy) / 2);
+
+            // calculate the split information
+            double greater_child_split_info =
+                    greater_child_split_count == 0 ? 0 : (((double) greater_child_split_count / (double) total_count) *
+                                                          log2((double) greater_child_split_count / (double) total_count));
+            double lesser_child_split_info =
+                    lesser_child_split_count == 0 ? 0 : (((double) lesser_child_split_count / (double) total_count) *
+                                                         log2((double) lesser_child_split_count / (double) total_count));
+            double split_information = -(lesser_child_split_info + greater_child_split_info);
+
+            delete[] parent_label_counts;
+            delete[] lesser_child_label_counts;
+            delete[] greater_child_label_counts;
+            return split_information == 0 ? 0 : information_gain / split_information;
         }
-        parent_entropy = -parent_entropy;
-
-        //calculate the child entropies
-        double lesser_child_entropy = 0.0;
-        for (int i = 0; i < label_count; ++i) {  // run the summation
-            double p_i = (double) lesser_child_label_counts[i] / (double) lesser_child_split_count;
-            if (p_i == 0) continue;
-            lesser_child_entropy += p_i * log2(p_i);
-        }
-        lesser_child_entropy = -lesser_child_entropy;
-        double greater_child_entropy = 0.0;
-        for (int i = 0; i < label_count; ++i) {  // run the summation
-            double p_i = (double) greater_child_label_counts[i] / (double) greater_child_split_count;
-            if (p_i == 0) continue;
-            greater_child_entropy += p_i * log2(p_i);
-        }
-        greater_child_entropy = -greater_child_entropy;
-
-        // calculate information gain
-        double information_gain = parent_entropy - ((lesser_child_entropy + greater_child_entropy) / 2);
-
-        // calculate the split information
-        double greater_child_split_info =
-                greater_child_split_count == 0 ? 0 : (((double) greater_child_split_count / (double) total_count) *
-                                                      log2((double) greater_child_split_count / (double) total_count));
-        double lesser_child_split_info =
-                lesser_child_split_count == 0 ? 0 : (((double) lesser_child_split_count / (double) total_count) *
-                                                     log2((double) lesser_child_split_count / (double) total_count));
-        double split_information = -(lesser_child_split_info + greater_child_split_info);
-
-        delete[] parent_label_counts;
-        delete[] lesser_child_label_counts;
-        delete[] greater_child_label_counts;
-        return split_information == 0 ? 0 : information_gain / split_information;
-    }
 #endif
 
 } // pico_dt

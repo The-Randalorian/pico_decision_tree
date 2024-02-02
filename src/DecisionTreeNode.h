@@ -45,11 +45,6 @@ namespace pico_dt {
         /// \param count The length of both the parameter pointer array (parameters) and label array (labels).
         void fit(double **parameters, int *labels, size_t count);
 
-        /// Simplest prediction method, based on recursion. Recommended not to use.
-        /// \param parameters An array of parameters to use.
-        /// \return The predicted value.
-        [[maybe_unused]] int predict_simple(double *parameters);
-
         /// Predict a value given some parameters.
         /// \param parameters An array of parameters to use.
         /// \return The predicted valeue.
@@ -81,7 +76,12 @@ namespace pico_dt {
         /// \return A pointer to a buffer containing the serialized decision tree.
         uint8_t *serialize();
 
-        #ifdef PICO_DT_ENABLE_LOW_USE_FEATURES
+#ifdef PICO_DT_ENABLE_LOW_USE_FEATURES
+
+        /// Simplest prediction method, based on recursion. Recommended not to use.
+        /// \param parameters An array of parameters to use.
+        /// \return The predicted value.
+        [[maybe_unused]] int predict_simple(double *parameters);
 
         /// Calculate the information gain at this node. Mainly used internally. See https://en.wikipedia.org/wiki/Information_gain_ratio#Split_Information_calculation
         /// \param parameters An array of pointers to arrays of doubles giving sets of input parameters.
@@ -103,7 +103,7 @@ namespace pico_dt {
         [[maybe_unused]] double calculate_information_gain_ratio(double **parameters, const int *labels, size_t count,
                                                                  size_t split_parameter, double split_threshold) const;
 
-        #endif
+#endif
 
         DecisionTreeNode *parent_branch;
     private:
