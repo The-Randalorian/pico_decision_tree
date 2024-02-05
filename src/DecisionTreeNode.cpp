@@ -373,6 +373,8 @@ namespace pico_dt {
             size_t comparison_parameter;
             double comparison_threshold;
             DecisionTreeNode *new_node;
+            DecisionTreeNode *greater_branch;
+            DecisionTreeNode *lesser_branch;
             switch (buffer[buffer_pointer]) {
                 case PICO_DT_LEAF_FLAG:
                     memcpy(&default_value, buffer + buffer_pointer + 1, sizeof(default_value));
@@ -386,9 +388,9 @@ namespace pico_dt {
                     buffer_pointer += sizeof(comparison_parameter);
                     memcpy(&comparison_threshold, buffer + buffer_pointer + 1, sizeof(comparison_threshold));
                     buffer_pointer += sizeof(comparison_threshold);
-                    DecisionTreeNode *greater_branch = dt_stack;
+                    greater_branch = dt_stack;
                     dt_stack = greater_branch->parent_branch;
-                    DecisionTreeNode *lesser_branch = dt_stack;
+                    lesser_branch = dt_stack;
                     dt_stack = lesser_branch->parent_branch;
                     new_node = new DecisionTreeNode(parameter_count, label_count, comparison_parameter,
                                                     comparison_threshold, lesser_branch,
@@ -396,6 +398,8 @@ namespace pico_dt {
                     new_node->parent_branch = dt_stack;
                     dt_stack = new_node;
                     break;
+                default:
+                    return nullptr;
             }
         }
         DecisionTreeNode *final = dt_stack;
