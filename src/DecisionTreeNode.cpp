@@ -230,7 +230,12 @@ namespace pico_dt {
             }
         }
 
-        if (lesser_child_split_count <= 0 || greater_child_split_count <= 0) return 0;
+        if (lesser_child_split_count <= 0 || greater_child_split_count <= 0) {
+            delete[] parent_label_counts;
+            delete[] lesser_child_label_counts;
+            delete[] greater_child_label_counts;
+            return 0;
+        }
 
         // calculate the parent entropy
         double parent_entropy = 0.0;
